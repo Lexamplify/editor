@@ -1,0 +1,288 @@
+{
+"files": [
+{
+"path": "index.html",
+"kind": "entry",
+"lang": "html",
+"size": 355,
+"token_estimate": 89,
+"brief": "HTML entry mounting Vue app",
+"exports": [],
+"first_lines": [
+"<!doctype html>",
+"<html lang=\"zh-CN\">",
+" <head>",
+" <meta charset=\"UTF-8\" />",
+" <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />",
+" <title>Umo Editor</title>",
+" <link rel=\"icon\" href=\"/favicon.png\" />",
+" </head>"
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+},
+{
+"path": "src/main.ts",
+"kind": "entry",
+"lang": "ts",
+"size": 250,
+"token_estimate": 63,
+"brief": "Bootstraps Vue app and installs UmoEditor plugin",
+"exports": [],
+"first_lines": [
+"import type { UmoEditorOptions } from '@/types'",
+"",
+"import App from './app.vue'",
+"import { useUmoEditor } from './components'",
+"const app = createApp(App)",
+"",
+"const options = {}",
+"",
+"app.use(useUmoEditor, options as UmoEditorOptions)"
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+},
+{
+"path": "src/app.vue",
+"kind": "component",
+"lang": "vue",
+"size": 4800,
+"token_estimate": 1200,
+"brief": "Demo host page embedding <umo-editor /> component",
+"exports": [],
+"first_lines": [
+"<template>",
+" <div class=\"examples\">",
+" <div class=\"box\">",
+" <umo-editor ref=\"editorRef\" v-bind=\"options\" />",
+" </div>",
+" <!-- <div class=\"box\">",
+" <umo-editor editor-key=\"testaaa\" :toolbar=\"{ defaultMode: 'classic' }\" />",
+" </div> -->",
+" </div>"
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+},
+{
+"path": "vite.config.ts",
+"kind": "config",
+"lang": "ts",
+"size": 3300,
+"token_estimate": 825,
+"brief": "Vite build and plugin configuration with DTS, auto-import, SVG icons",
+"exports": ["defineConfig"],
+"first_lines": [
+"import Vue from '@vitejs/plugin-vue'",
+"import ReactivityTransform from '@vue-macros/reactivity-transform/vite'",
+"import AutoImport from 'unplugin-auto-import/vite'",
+"import { TDesignResolver } from 'unplugin-vue-components/resolvers'",
+"import Components from 'unplugin-vue-components/vite'",
+"import VueMacros from 'unplugin-vue-macros/vite'",
+"import { defineConfig } from 'vite'",
+"import dts from 'vite-plugin-dts'"
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+},
+{
+"path": "tsconfig.json",
+"kind": "config",
+"lang": "json",
+"size": 1300,
+"token_estimate": 325,
+"brief": "TypeScript compiler options with path aliases and Vue macros",
+"exports": [],
+"first_lines": [
+"{",
+" \"compilerOptions\": {",
+" \"noImplicitAny\": false,",
+" \"removeComments\": true,",
+" \"disableSizeLimit\": true,",
+" \"target\": \"ESNext\",",
+" \"module\": \"ESNext\",",
+" \"strict\": true"
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+},
+{
+"path": "package.json",
+"kind": "config",
+"lang": "json",
+"size": 7400,
+"token_estimate": 1850,
+"brief": "NPM package manifest with scripts and dependencies",
+"exports": [],
+"first_lines": [
+"{",
+" \"name\": \"lexteam-editor\",",
+" \"version\": \"7.0.3\",",
+" \"type\": \"module\",",
+" \"description\": \"LexTeam Editor is open-source document editor based on Vue3 and Tiptap. LexTeam Editor provides comprehensive document editing capabilities and AI creation features, supports pagination, supports Markdown syntax, offers basic rich text editing functions, allows for the insertion of various node types in multiple formats, provides a variety of practical tools, and supports setting page styles. It also supports exporting in various formats, printing and print preview, block-level document editing, adding custom extensions, multi-language settings, and a dark theme.\",",
+" \"keywords\": [",
+" \"lexteam editor\","
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+},
+{
+"path": "src/components/SidebarDoc.vue",
+"kind": "component",
+"lang": "vue",
+"size": 12000,
+"token_estimate": 3000,
+"brief": "AI suggestion sidebar comparing original vs suggested text with accept/reject",
+"exports": [],
+"first_lines": [
+"<template>",
+" <div class=\"sidebar-doc-container\">",
+" <!-- Right sidebar with controls -->",
+" <div class=\"sidebar-controls\">",
+" <!-- AI Suggest Button -->",
+" <button ",
+" @click=\"getSuggestion\" ",
+" class=\"suggest-button\""
+],
+"contains_selection_logic": true,
+"mentions_textAlign_or_list": true
+},
+{
+"path": "src/components/container/page.vue",
+"kind": "component",
+"lang": "vue",
+"size": 8800,
+"token_estimate": 2200,
+"brief": "Page container hosting zoomable editor and SidebarDoc",
+"exports": [],
+"first_lines": [
+"<template>",
+" ",
+" <div class=\"umo-main-container\">",
+" <container-toc",
+" v-if=\"pageOptions.showToc\"",
+" @close=\"pageOptions.showToc = false\"",
+" />",
+" <div class=\"umo-content-with-sidebar\">"
+],
+"contains_selection_logic": true,
+"mentions_textAlign_or_list": true
+},
+{
+"path": "src/components/editor/index.vue",
+"kind": "component",
+"lang": "vue",
+"size": 3300,
+"token_estimate": 825,
+"brief": "Tiptap EditorContent wrapper with dynamic extensions",
+"exports": [],
+"first_lines": [
+"<template>",
+" <editor-content",
+" class=\"umo-editor-content\"",
+" :class=\"{",
+" 'show-bookmark': page.showBookmark,",
+" 'show-line-number': page.showLineNumber,"
+],
+"contains_selection_logic": true,
+"mentions_textAlign_or_list": true
+},
+{
+"path": "src/components/index.vue",
+"kind": "component",
+"lang": "vue",
+"size": 33000,
+"token_estimate": 8250,
+"brief": "UmoEditor root component composing toolbar, container, statusbar",
+"exports": ["UmoEditor"],
+"first_lines": [
+"<template>",
+" <t-config-provider",
+" :key=\"options.editorKey\"",
+" :global-config=\"{",
+" ...localeConfig[locale],",
+" classPrefix: 'umo',",
+" }\""
+],
+"contains_selection_logic": true,
+"mentions_textAlign_or_list": true
+},
+{
+"path": "src/components/index.ts",
+"kind": "entry",
+"lang": "ts",
+"size": 565,
+"token_estimate": 141,
+"brief": "Plugin installer exporting UmoEditor component",
+"exports": ["useUmoEditor", "UmoEditor"],
+"first_lines": [
+"import type { App } from 'vue'",
+"import UmoEditor from './index.vue'",
+"",
+"export function useUmoEditor(app: App, options: Record<string, any>) {",
+" app.component('UmoEditor', UmoEditor)",
+"}"
+],
+"contains_selection_logic": false,
+"mentions_textAlign_or_list": false
+}
+],
+"entrypoints": [
+"index.html",
+"src/main.ts"
+],
+"editor_files": [
+"src/components/editor/index.vue",
+"src/components/container/page.vue",
+"src/components/index.vue",
+"src/components/extensions/index.ts"
+],
+"size_summary": {
+"total_files": 11,
+"total_bytes": 70200,
+"top5_largest_files": [
+"src/components/index.vue",
+"src/components/SidebarDoc.vue",
+"src/components/container/page.vue",
+"package.json",
+"vite.config.ts"
+]
+},
+"short_readme": "LexTeam Editor is an open-source Vue 3 + Tiptap document editor library. It provides rich-text editing, pagination, AI assistance, and export features wrapped in the <umo-editor> component. This repo contains the library source, build config, and demo app.",
+"suspicious": [],
+"recommended_chunks": [
+{
+"path": "src/components/container/page.vue",
+"reason": "selection logic and sidebar integration"
+},
+{
+"path": "src/components/SidebarDoc.vue",
+"reason": "AI suggestion sidebar with selection handling"
+},
+{
+"path": "src/components/editor/index.vue",
+"reason": "Tiptap editor setup and selection utilities"
+},
+{
+"path": "src/components/index.vue",
+"reason": "Root editor orchestration and provides/injects"
+},
+{
+"path": "src/components/extensions/index.ts",
+"reason": "Registry of all Tiptap extensions"
+},
+{
+"path": "vite.config.ts",
+"reason": "Build and plugin configuration"
+},
+{
+"path": "package.json",
+"reason": "Dependencies and scripts overview"
+},
+{
+"path": "tsconfig.json",
+"reason": "Path aliases and compiler options"
+}
+]
+}

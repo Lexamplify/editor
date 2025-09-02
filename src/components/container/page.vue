@@ -1,19 +1,21 @@
 <template>
+  
   <div class="umo-main-container">
     <container-toc
       v-if="pageOptions.showToc"
       @close="pageOptions.showToc = false"
     />
-    <div
-      :class="`umo-zoomable-container umo-${pageOptions.layout}-container umo-scrollbar`"
-    >
+    <div class="umo-content-with-sidebar">
       <div
-        class="umo-zoomable-content"
-        :style="{
-          width: pageZoomWidth,
-          height: pageZoomHeight,
-        }"
+        :class="`umo-zoomable-container umo-${pageOptions.layout}-container umo-scrollbar`"
       >
+        <div
+          class="umo-zoomable-content"
+          :style="{
+            width: pageZoomWidth,
+            height: pageZoomHeight,
+          }"
+        >
         <t-watermark
           class="umo-page-content"
           :style="{
@@ -68,7 +70,20 @@
             ></div>
           </div>
         </t-watermark>
+        </div>
       </div>
+      <!-- Sidebar for AI suggestions -->
+      <sidebar-doc
+        :suggestions="suggestions"
+        :current-index="currentIndex"
+        :busy="isBusy"
+        :error="errorMessage"
+        @request-suggest="handleRequestSuggest"
+        @accept="handleAccept"
+        @reject="handleReject"
+        @prev="showPrev"
+        @next="showNext"
+      />
     </div>
     <t-image-viewer
       v-model:visible="imageViewer.visible"
@@ -89,6 +104,7 @@
 
 <script setup lang="ts">
 import type { WatermarkOption } from '@/types'
+import SidebarDoc from '../SidebarDoc.vue'
 
 const container = inject('container')
 const imageViewer = inject('imageViewer')
@@ -141,7 +157,7 @@ watch(
   { deep: true },
 )
 
-// FIXME:
+// Editor instance
 const editorInstance = inject('editor')
 watch(
   () => editorInstance.value?.getHTML(),
@@ -149,6 +165,146 @@ watch(
     void setPageZoomHeight()
   },
 )
+
+// ------------------------
+// AI Suggestion state & helpers
+// ------------------------
+
+interface BlockSuggestion {
+  blockId: string
+  originalText: string
+  suggestedText: string
+  type: 'paragraph' | 'heading' | 'list_item'
+  attrs: Record<string, any>
+  marksMap?: Array<{ from: number; to: number; marks: any[] }>
+  anchor: { from: number; to: number }
+}
+
+interface SuggestionBundle {
+  id: string
+  blocks: BlockSuggestion[]
+  createdAt: number
+  selectionSummary: string
+}
+
+let suggestions = $ref<SuggestionBundle[]>([])
+let currentIndex = $ref(0)
+let isBusy = $ref(false)
+let errorMessage = $ref<string | null>(null)
+
+function uuid() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
+function getSelectionText(): { text: string; from: number; to: number } {
+  const ed = editorInstance.value
+  if (!ed) return { text: '', from: 0, to: 0 }
+  const { state } = ed
+  const { from, to } = state.selection
+  const text = state.doc.textBetween(from, to, '\n')
+  return { text, from, to }
+}
+
+function getFullDocText(): string {
+  const ed = editorInstance.value
+  if (!ed) return ''
+  return ed.getText()
+}
+
+async function callSuggestAPI(text: string): Promise<string> {
+  const res = await fetch('https://us-central1-legalease-prod.cloudfunctions.net/api/suggest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ actionType: 'Rephrase', text }),
+  })
+  if (!res.ok) throw new Error(`Suggest failed: ${res.status}`)
+  const data = (await res.json()) as { suggestion?: string }
+  return data.suggestion ?? ''
+}
+
+async function handleRequestSuggest() {
+  try {
+    isBusy = true
+    errorMessage = null
+    const sel = getSelectionText()
+    const text = sel.text && sel.text.trim().length > 0 ? sel.text : getFullDocText()
+    if (!text || text.trim().length === 0) {
+      errorMessage = 'No text to process.'
+      return
+    }
+
+    const suggested = await callSuggestAPI(text)
+    if (!suggested) {
+      errorMessage = 'No suggestion returned.'
+      return
+    }
+
+    // Build a minimal bundle (single-block). Keeps anchor for accept.
+    const bundle: SuggestionBundle = {
+      id: uuid(),
+      createdAt: Date.now(),
+      selectionSummary: text.slice(0, 120),
+      blocks: [
+        {
+          blockId: uuid(),
+          originalText: text,
+          suggestedText: suggested,
+          type: 'paragraph',
+          attrs: {},
+          anchor: sel.text ? { from: sel.from, to: sel.to } : { from: 0, to: editorInstance.value?.state.doc.content.size ?? 0 },
+        },
+      ],
+    }
+    suggestions.push(bundle)
+    currentIndex = suggestions.length - 1
+  } catch (e: any) {
+    errorMessage = e?.message ?? 'Suggest failed.'
+  } finally {
+    isBusy = false
+  }
+}
+
+function showPrev() {
+  if (suggestions.length <= 1) return
+  currentIndex = (currentIndex - 1 + suggestions.length) % suggestions.length
+}
+
+function showNext() {
+  if (suggestions.length <= 1) return
+  currentIndex = (currentIndex + 1) % suggestions.length
+}
+
+function removeBundle(id: string) {
+  const idx = suggestions.findIndex(s => s.id === id)
+  if (idx !== -1) {
+    suggestions.splice(idx, 1)
+    if (currentIndex >= suggestions.length) currentIndex = Math.max(0, suggestions.length - 1)
+  }
+}
+
+function handleReject(id: string) {
+  removeBundle(id)
+}
+
+function handleAccept(id: string) {
+  const ed = editorInstance.value
+  if (!ed) return
+  const bundle = suggestions.find(s => s.id === id)
+  if (!bundle) return
+
+  const tr = ed.state.tr
+  bundle.blocks.forEach(b => {
+    const from = Math.max(0, Math.min(b.anchor.from, ed.state.doc.content.size))
+    const to = Math.max(0, Math.min(b.anchor.to, ed.state.doc.content.size))
+    if (to > from) {
+      tr.insertText(b.suggestedText, from, to)
+    } else {
+      tr.insertText(b.suggestedText, from)
+    }
+  })
+  ed.view.dispatch(tr)
+  removeBundle(id)
+}
 
 // 水印
 const watermarkOptions = $ref<{
@@ -208,6 +364,13 @@ watch(
   height: 100%;
   display: flex;
   position: relative;
+}
+
+.umo-content-with-sidebar {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  padding: 16px;
 }
 
 .umo-zoomable-container {
